@@ -3,6 +3,8 @@
 <!-- TOC -->
 
 - [Documentação de arquitetura](#documentação-de-arquitetura)
+  - [Sobre processos de desenvolvimento](#sobre-processos-de-desenvolvimento)
+  - [Sobre Estilos de código](#sobre-estilos-de-código)
   - [Sobre a arquitetura de código](#sobre-a-arquitetura-de-código)
     - [Estrutura de pastas](#estrutura-de-pastas)
     - [Camada de apresentação](#camada-de-apresentação)
@@ -20,6 +22,14 @@
       - [Next-ID](#next-id)
 
 <!-- /TOC -->
+
+## Sobre processos de desenvolvimento
+
+// Metodologias vão aqui
+
+## Sobre Estilos de código
+
+// StyleGuides e linguagens vão aqui
 
 ## Sobre a arquitetura de código
 
@@ -136,7 +146,11 @@ project-x
 
 ### Camada de apresentação
 
-A camada de apresentação será responsável por receber as chamadas de outros serviços
+A camada de apresentação será responsável por receber as chamadas do [NextGate](#nextgate) e encaminhar para a camada de serviços.
+
+Esta camada também vai ser responsável por receber as respostas da camada de serviço e apresentar para o usuário em forma de JSON ou qualquer outro content type.
+
+Além disso, todos os erros que vierem das camadas inferiores, sejam eles relativos ou não à camada de apresentação, serão tratados e exibidos pelo usuário nesta mesma camada.
 
 ### Camada de Serviço
 
