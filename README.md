@@ -3,7 +3,7 @@
 <!-- TOC -->
 
 - [Documentação de arquitetura](#documentação-de-arquitetura)
-  - [Sobre a arquitetura](#sobre-a-arquitetura)
+  - [Sobre a arquitetura de código](#sobre-a-arquitetura-de-código)
     - [Estrutura de pastas](#estrutura-de-pastas)
     - [Camada de apresentação](#camada-de-apresentação)
     - [Camada de Serviço](#camada-de-serviço)
@@ -12,10 +12,16 @@
       - [Repositórios](#repositórios)
     - [Coluna de domínio](#coluna-de-domínio)
     - [Coluna de utilidades](#coluna-de-utilidades)
+  - [Sobre infraestrutura e disposição do sistema](#sobre-infraestrutura-e-disposição-do-sistema)
+    - [Infraestrutura](#infraestrutura)
+    - [Mapa do Sistema](#mapa-do-sistema)
+      - [NextGate](#nextgate)
+      - [Billing](#billing)
+      - [Next-ID](#next-id)
 
 <!-- /TOC -->
 
-## Sobre a arquitetura
+## Sobre a arquitetura de código
 
 Estamos utilizando o modelo baseado em *Domain Driven Design*, com ou sem [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html).
 
@@ -104,6 +110,7 @@ project-x
 
 - `project-x`: É a pasta inicial que vai conter o nome do projeto, tudo estará dentro desta pasta
   - **Arquivos de estrutura**: Abaixo da raiz, no primeiro nível, vamos ter os dotfiles necessários para configuração de CI/CD, Docker e outras informações; aqui será aonde vamos ter o `package.json` e o `tsconfig.json`
+  - `.env` ou `.envrc`: Variáveis de ambiente devem ficar em um arquivo `.envrc` para **execução local**, toda a execução em imagem teremos um CI que vai passar as variáveis de ambiente para o container. Todo `.envrc` deve ter um `.envrc-sample` com a lista das variáveis de ambiente daquela aplicação
   - `src`: Pasta que conterá todo o código fonte da aplicação
     - `index.ts`: É o *entrypoint* da aplicação, será nele que a aplicação vai começar
     - `data`: É a camada de dados da aplicação, conforme especificada [em sua seção](#camada-de-dados)
@@ -129,7 +136,7 @@ project-x
 
 ### Camada de apresentação
 
-A camada de apresentação será responsável
+A camada de apresentação será responsável por receber as chamadas de outros serviços
 
 ### Camada de Serviço
 
@@ -142,3 +149,54 @@ A camada de apresentação será responsável
 ### Coluna de domínio
 
 ### Coluna de utilidades
+
+## Sobre infraestrutura e disposição do sistema
+
+### Infraestrutura
+
+O fluxo de infraestrutura não é muito bem definido em detalhes porque ainda não foi totalmente pensado, inicialmente pensamos em utilizar um modelo como o abaixo:
+
+![](./images/NXCD-Infrastructure.jpeg)
+
+1. Desenvolvedores vão codificar a aplicação
+2. O push no repositório vai ativar o build no CI
+3. CI irá rodar os testes automatizados
+4. Se todos os testes passarem, o CI irá construir a imagem
+5. Depois de construída, vamos enviar a imagem para ser armazenada em um registry para que possamos baixar estas imagens individualmente depois e testar versão a versão
+6. Após o término da build da imagem, o CI irá iniciar um deploy na infraestrutura do Kubernetes
+
+### Mapa do Sistema
+
+O sistema ficará organizado da seguinte forma:
+
+![](./images/NXCD-System-flow.png)
+
+Teremos um total de três aplicações:
+
+#### NextGate
+
+Será o gateway pelo qual todas as mensagens irão trafegar suas responsabilidades incluem:
+
+  - Autorizar escopos de usuário baseado em um token recebido pelo serviço de autenticação externo Auth0
+  - Verificar Rate Limits e concorrências dos clientes se comunicando com as aplicações de cobrança
+  - Fazer o proxy entre a requisição das áreas logadas e as áreas não logadas
+  - Contar números de requisições e processos simultâneos, inserindo os dados de telemetria nos bancos de dados
+
+Se alguma das regras não passarem, a request não será completada
+
+#### Billing
+
+A aplicação de cobrança será a inteligência por trás dos dados brutos de acesso e uso de aplicações do usuário. Esta aplicação:
+
+- Quando esta API está sendo utilizada
+- Quanto tempo de uso cada usuário está tendo
+- Quantidade de chamadas de uma API
+- Calcular preços baseados em todos esses dados
+
+O NextGate se comunicará com esta aplicação para poder descobrir se um usuário excedeu ou não sua cota de uso.
+
+> Talvez seja necessário quebrar esta aplicação em algumas partes para ter responsabilidades mais isoladas.
+
+#### Next-ID
+
+Aplicação propriamente dita
