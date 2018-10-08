@@ -1,35 +1,97 @@
 # Documentação de arquitetura
 
-<!-- TOC -->
-
-- [Documentação de arquitetura](#documentação-de-arquitetura)
-  - [Sobre processos de desenvolvimento](#sobre-processos-de-desenvolvimento)
-  - [Sobre Estilos de código](#sobre-estilos-de-código)
-  - [Sobre a arquitetura de código](#sobre-a-arquitetura-de-código)
-    - [Estrutura de pastas](#estrutura-de-pastas)
-    - [Camada de apresentação](#camada-de-apresentação)
-    - [Camada de Serviço](#camada-de-serviço)
-    - [Camada de dados](#camada-de-dados)
-      - [Conexões](#conexões)
-      - [Repositórios](#repositórios)
-    - [Coluna de domínio](#coluna-de-domínio)
-    - [Coluna de utilidades](#coluna-de-utilidades)
-  - [Sobre infraestrutura e disposição do sistema](#sobre-infraestrutura-e-disposição-do-sistema)
-    - [Infraestrutura](#infraestrutura)
-    - [Mapa do Sistema](#mapa-do-sistema)
-      - [NextGate](#nextgate)
-      - [Billing](#billing)
-      - [Next-ID](#next-id)
-
-<!-- /TOC -->
+[TOC]
 
 ## Sobre processos de desenvolvimento
 
-// Metodologias vão aqui
+O processo de desenvolvimento do sistema é baseado no modelo ágil // Continua amanhã
 
 ## Sobre Estilos de código
 
-// StyleGuides e linguagens vão aqui
+- Vamos utilizar o estilo pré-pronto [standardJS](https://standardjs.com/) como **linter**.
+
+- [Prettier](https://prettier.io) como **formatter**.
+- Vamos utilizar [PNPM](https://pnpm.js.org/) como gerenciador de dependências porque ele evita instalação de dependências duplicadas e também gera menos instalações de pacotes por gerar SymLinks ao invés de reinstalar tudo (leia a doc)
+  - Principalmente para desenvolvimento local, uma vez que CI/CDs podem não ter suporte a este instalador
+- Utilizamos o [TypeScript](https://www.typescriptlang.org/) como linguagem de programação pelos motivos abaixo:
+  - Em um time grande, a tipagem estática do TS ajuda a manter a ordem do repositório
+  - Podemos criar interfaces tanto para os parâmetros de entrada quanto para os dados de saída e também para os retornos de APIs
+  - Podemos, facilmente, alterar o alvo de nossas builds para sistemas mais antigos, mais novos e também utilizar propostas ainda não implementadas pelo TC39 através do `tsconfig.json` usando o Babel
+
+>  **Importante**
+>
+> Linters e formatters são coisas diferentes. Enquanto o Linter vai somente dizer aonde que o código está fugindo do estilo, o formatter irá, de fato alterar o estilo de código e salvar os arquivos.
+
+### Arquivos de configuração
+
+Todo projeto vai ter arquivos de configuração padrões, os chamados *dotfiles*, que são responsáveis por configurar nossas extensões e editores e devem ficar na raiz do projeto, juntamente com a pasta `.git`.
+
+#### Git Ignore
+
+Todo projeto deve ter um `.gitignore` que pode ser gerado [neste endereço](https://www.gitignore.io/api/vim,node,linux,macos,windows,visualstudiocode) e complementado depois. Ele vai prover os principais arquivos de *ignore* para os principais IDEs que usamos e a linguagem Node.
+
+#### EditorConfig
+
+O [EditorConfig](https://editorconfig.org) é um modelo de padronização de código em editores e IDEs, a grande maioria dos editores possuem um plugin para ler arquivos `.editorconfig` que ficam na raiz do projeto e aplicar suas regras ao código escrito em todos os arquivos:
+
+**.editorconfig:**
+
+```ini
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.js]
+charset = utf-8
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.html]
+charset = utf-8
+indent_style = space
+indent_size = 2
+```
+
+Como a maioria do time usa o [VSCode](https://code.visualstudio.com/), o plugin para ele está [no link da extensão](https://github.com/editorconfig/editorconfig-vscode)
+
+#### StandardJS
+
+Para o standard, vamos instalar **sempre**, a biblioteca *StandardJS* como *Dev Dependency* no NPM através de `pnpm i -D standard`.
+
+Todo o projeto também terá um script de lint que poderá ser acessado usando `pnpm run lint` ou `npm run lint` que, basicamente, irá rodar `standard`. O ideal será rodar este comando antes de dar push para o repositório. Porém, se o desenvolvedor se esquecer, o CI irá fazer o trabalho.
+
+#### Prettier
+
+Vamos utilizar o Prettier para poder padronizar o modelo de desenvolvimento de código. Para isso, vamos executar `pnpm install --exact -D prettier`.
+
+> Vamos utilizar `—exact` porque mudanças de versão do Prettier causam alterações de estilo no core do sistema e é recomendado utilizar a versão exata no `package.json`
+
+Arquivo de configuração `.prettierrc` que ficará na raiz: 
+
+**.prettierrc:**
+
+```json
+{
+  "tabWidth":2,
+  "useTabs":false,
+  "semi":false,
+  "singleQuote":true,
+  "trailingComma":"none",
+  "bracketSpacing":true,
+  "arrowParens":"always"
+}
+```
+
+Descrição das regras do arquivo:
+
+- Uma `TAB` equivale a 2 espaços
+- Sempre vamos usar espaços ao invés de *tabs*
+- Não haverá `;` no final das linhas
+- Sempre usaremos `'` ao invés de `"`
+- Não vamos usar `,` no final da última propriedade de objetos
+- Em um objeto do tipo `{key:value}` vamos ter espaços entre chaves, ficando `{ key: value }`
+- Toda arrow function do tipo `param => { … }` vai se tornar `(param) => { … }`
 
 ## Sobre a arquitetura de código
 
