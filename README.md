@@ -1,6 +1,45 @@
 # Documentação de arquitetura
 
-[TOC]
+<!-- TOC -->
+
+- [Documentação de arquitetura](#documentação-de-arquitetura)
+  - [Sobre processos de desenvolvimento](#sobre-processos-de-desenvolvimento)
+    - [Scrum](#scrum)
+      - [Sprint Planning](#sprint-planning)
+      - [Sprint Review](#sprint-review)
+      - [Sprint Retrospective](#sprint-retrospective)
+      - [Status de tarefas](#status-de-tarefas)
+    - [Sobre versionamento](#sobre-versionamento)
+      - [Funcionamento](#funcionamento)
+        - [Fluxo de _bugfix_](#fluxo-de-_bugfix_)
+      - [Convenções para números de versão](#convenções-para-números-de-versão)
+        - [Patch](#patch)
+        - [Minor](#minor)
+        - [Major](#major)
+        - [Exemplos](#exemplos)
+  - [Sobre Estilos de código](#sobre-estilos-de-código)
+    - [Arquivos de configuração](#arquivos-de-configuração)
+      - [Git Ignore](#git-ignore)
+      - [EditorConfig](#editorconfig)
+      - [StandardJS](#standardjs)
+      - [Prettier](#prettier)
+  - [Sobre a arquitetura de código](#sobre-a-arquitetura-de-código)
+    - [Estrutura de pastas](#estrutura-de-pastas)
+    - [Camada de apresentação](#camada-de-apresentação)
+    - [Camada de Serviço](#camada-de-serviço)
+    - [Camada de dados](#camada-de-dados)
+      - [Conexões](#conexões)
+      - [Repositórios](#repositórios)
+    - [Coluna de domínio](#coluna-de-domínio)
+    - [Coluna de utilidades](#coluna-de-utilidades)
+  - [Sobre infraestrutura e disposição do sistema](#sobre-infraestrutura-e-disposição-do-sistema)
+    - [Infraestrutura](#infraestrutura)
+    - [Mapa do Sistema](#mapa-do-sistema)
+      - [NextGate](#nextgate)
+      - [Billing](#billing)
+      - [Next-ID](#next-id)
+
+<!-- /TOC -->
 
 ## Sobre processos de desenvolvimento
 
@@ -24,7 +63,7 @@ Quando falamos de reuniões "rituais" temos algumas principais.
 
 #### Sprint Planning
 
-É o processo onde todos do time (incluindo o P.O e o Scrum Master) se reunem para realizar o planejamento da próxima sprint. 
+É o processo onde todos do time (incluindo o P.O e o Scrum Master) se reunem para realizar o planejamento da próxima sprint.
 
 Ela geralmente acontece um dia depois da sprint anterior terminar (ou então no mesmo dia). Nesta reunião serão definidas todas as tarefas que serão passadas do *backlog* para tarefas ativas, é importante que as tarefas sejam bem especificadas e, na medida do possível, independentes umas das outras, de forma que todos do time possam realizar tarefas em paralelo ao invés de ter de esperar outros terminarem.
 
@@ -40,7 +79,7 @@ Individualmente, todas as tarefas devem ser mostradas e testadas como se um usu�
 
 Esta é uma reunião interna do time, que pode ou não ser necessária. Em times pequenos ela geralmente não se faz muito importante, pois será aonde o time irá conversar sobre o processo em si, nesta reunião o P.O não precisa estar presente, mas a presença do Scrum Master é importante.
 
-A reunião não pode durar mais de 1h e, nela, os membros vão escrever o que foi bom na última sprint e os pontos de melhoria. Desta forma o processo pode melhorar na próxima sprint. 
+A reunião não pode durar mais de 1h e, nela, os membros vão escrever o que foi bom na última sprint e os pontos de melhoria. Desta forma o processo pode melhorar na próxima sprint.
 
 O intervalo de execução dessas reuniões geralmente é definido como **uma vez a cada 2 sprints** ou então 2 vezes por mês, pois executar este ritual muitas vezes acaba sendo improdutivo e não trazendo muitos problemas, mas demorar a executar também cria um problema por conta dos membros do time não lembrarem de sprints anteriores.
 
@@ -61,21 +100,37 @@ Estaremos utilizando o [Git Flow](https://www.atlassian.com/git/tutorials/compar
 
 #### Funcionamento
 
-O git flow funciona da seguinte maneira:
+Assim como o Scrum, vamos adaptar o modelo do Git Flow para funcionar de uma forma mais simples. Não vamos ter o branch `develop` e vamos fazer todos os desenvolvimentos no branch `release/nome-da-release`:
 
-- Iniciamos com um *branch* de desenvolvimento, normalmente chamado de `develop`, todo o desenvolvimento novo será mesclado neste branch.
-- A cada nova funcionalidade (ou **feature**), um novo branch é criado a partir do `develop` seguindo a nomenclatura `feature/nome-da-feature`, é neste branch que todo o desenvolvimento será feito
-- Uma vez que uma funcionalidade é terminada, ela é mesclada de volta no branch `develop`
-- Quando a sprint termina, temos que criar uma nova release, para isso vamos mesclar o branch `develop` em um novo branch chamado `release/nome-da-release`
-  - Neste processo será aonde vamos adicionar, atualizar e corrigir os números de versão
-  - Aqui será aonde vamos realizar a criação das tags para esta release
-- Depois de finalizar a criação da release vamos fazer o *shipping* da mesma. Para isto vamos mesclar o branch `release/nome-da-release` de volta no branch `develop` e também no branch `master`. O branch `master` será **sempre** o branch da versão que está em produção no momento
+- Iniciamos somente com o branch `master`, dele clonamos um branch `release/nome-da-release`, de onde todos os demais branches `feature/nome-da-feature` serão clonados
+- Ao iniciar uma nova feature, vamos clonar do branch `release/nome-da-release` o branch `feature/nome-da-feature`
+- Uma vez que a funcionalidade terminar, ela será novamente mesclada ao branch `release/nome-da-release`
+- Quando a sprint for terminada, vamos mesclar o branch `release/nome-da-release` no branch master (**isso significa que vamos publicar o branch em produção**)
+  - Aqui será aonde vamos adicionar, atualizar e corrigir os números de versão
+  - Também vamos tagear a release com seu nome
+- Depois de mesclada, o branch da `release/nome-da-release` é removido do GitLab e um novo branch `release/nome-da-proxima-release` é criado a partir da `master`
 
-Além do fluxo padrão de desenvolvimento de novas funcionalidades, temos o fluxo de correção de bugs, as chamadas `hotfixes`. 
+> O branch `master` será **sempre** o branch da versão que está em produção no momento
+
+> **Funcionamento do Git Flow original**
+>
+> O git flow original funciona da seguinte maneira:
+>
+> - Iniciamos com um *branch* de desenvolvimento, normalmente chamado de `develop`, todo o desenvolvimento novo será mesclado neste branch.
+> - A cada nova funcionalidade (ou **feature**), um novo branch é criado a partir do `develop` seguindo a nomenclatura > `feature/nome-da-feature`, é neste branch que todo o desenvolvimento será feito
+> - Uma vez que uma funcionalidade é terminada, ela é mesclada de volta no branch `develop`
+> - Quando a sprint termina, temos que criar uma nova release, para isso vamos mesclar o branch `develop` em um novo branch chamado > `release/nome-da-release`
+>   - Neste processo será aonde vamos adicionar, atualizar e corrigir os números de versão
+>   - Aqui será aonde vamos realizar a criação das tags para esta release
+> - Depois de finalizar a criação da release vamos fazer o *shipping* da mesma. Para isto vamos mesclar o branch `release/nome-da-release` de > volta no branch `develop` e também no branch `master`.
+
+##### Fluxo de _bugfix_
+
+Além do fluxo padrão de desenvolvimento de novas funcionalidades, temos o fluxo de correção de bugs, as chamadas `hotfixes`.
 
 Para isto, vamos seguir os passos:
 
-- Criamos um novo branch `hotfix/descrição-do-fix` a partir da branch `master`, **e não mais da `develop`** 
+- Criamos um novo branch `hotfix/descrição-do-fix` a partir da branch `master`, **e não mais da `develop`**
 - Realizamos a correção nesta branch
 - Ao finalizar, mesclamos a branch nos branches `develop` e `master`
   - Aqui vamos criar uma tag para o branch master informando a descrição do fix
@@ -175,7 +230,7 @@ Vamos utilizar o Prettier para poder padronizar o modelo de desenvolvimento de c
 
 > Vamos utilizar `—exact` porque mudanças de versão do Prettier causam alterações de estilo no core do sistema e é recomendado utilizar a versão exata no `package.json`
 
-Arquivo de configuração `.prettierrc` que ficará na raiz: 
+Arquivo de configuração `.prettierrc` que ficará na raiz:
 
 **.prettierrc:**
 
@@ -334,7 +389,7 @@ A camada de dados é a responsável pela comunicação com fontes externas de da
 
 #### Conexões
 
-Nesta camada estará a pasta `connections` que será um agregado de conexões de bancos de dados que podem ser utilizadas. 
+Nesta camada estará a pasta `connections` que será um agregado de conexões de bancos de dados que podem ser utilizadas.
 
 Aqui estarão os arquivos que gerarão e conectarão com os bancos de dados, mas não vão realizar nenhum tipo de operação.
 
