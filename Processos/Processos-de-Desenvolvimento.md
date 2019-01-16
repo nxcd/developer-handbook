@@ -15,7 +15,6 @@
       - [Fluxo de _hotfix_](#fluxo-de-_hotfix_)
       - [Changelogs](#changelogs)
 - [Codinome da versão](#codinome-da-versão)
-  - [- Descrição do bug 1 (#número-da-PR)](#--descrição-do-bug-1-número-da-pr)
     - [Convenções para números de versão](#convenções-para-números-de-versão)
       - [Patch](#patch)
       - [Minor](#minor)
